@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>USB Control System - Panel</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            color: white;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        .stars {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+        }
+        
+        .star {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: white;
+            border-radius: 50%;
+            animation: twinkle 3s infinite;
+        }
+        
+        @keyframes twinkle {
+            0%, 100% { opacity: 0; }
+            50% { opacity: 1; }
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        
+        .header h1 {
+            font-size: 3em;
+            background: linear-gradient(45deg, #00ff88, #00ccff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 0 30px rgba(0, 255, 136, 0.5);
+            margin-bottom: 10px;
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+        
+        @keyframes glow {
+            from { filter: drop-shadow(0 0 20px rgba(0, 255, 136, 0.5)); }
+            to { filter: drop-shadow(0 0 30px rgba(0, 204, 255, 0.8)); }
+        }
+        
+        .header p {
+            font-size: 1.2em;
+            color: #aaa;
+            margin-bottom: 20px;
+        }
+        
+        .server-status {
+            display: inline-block;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-weight: bold;
+            margin: 10px 0;
+            transition: all 0.3s ease;
+        }
+        
+        .server-status.online {
+            background: linear-gradient(45deg, #00ff88, #00cc66);
+            color: #000;
+            box-shadow: 0 4px 15px rgba(0, 255, 136, 0.4);
+        }
+        
+        .server-status.offline {
+            background: linear-gradient(45deg, #ff4444, #cc0000);
+            color: #fff;
+            box-shadow: 0 4px 15px rgba(255, 68, 68, 0.4);
+        }
+        
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+        
+        .card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            padding: 30px;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transform: rotate(45deg);
+            transition: all 0.5s ease;
+            opacity: 0;
+        }
+        
+        .card:hover::before {
+            animation: shine 0.5s ease;
+        }
+        
+        @keyframes shine {
+            0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); opacity: 0; }
+            50% { opacity: 1; }
+            100% { transform: translateX(100%) translateY(100%) rotate(45deg); opacity: 0; }
+        }
+        
+        .card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+        
+        .card-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+            gap: 15px;
+        }
+        
+        .card-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5em;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .card h2 {
+            font-size: 1.5em;
+            color: #ffcc00;
+            margin: 0;
+        }
+        
+        .info-grid {
+            display: grid;
+            gap: 15px;
+        }
+        
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.3s ease;
+        }
+        
+        .info-item:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        .info-label {
+            color: #aaa;
+            font-size: 0.9em;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .info-value {
+            font-weight: bold;
+            color: #fff;
+            font-size: 1.1em;
+        }
+        
+        .status-badge {
+            padding: 6px 15px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .status-badge.active {
+            background: linear-gradient(45deg, #ff4444, #cc0000);
+            color: white;
+            box-shadow: 0 2px 10px rgba(255, 68, 68, 0.4);
+        }
+        
+        .status-badge.inactive {
+            background: linear-gradient(45deg, #44ff44, #00cc00);
+            color: black;
+            box-shadow: 0 2px 10px rgba(68, 255, 68, 0.4);
+        }
+        
+        .status-badge.warning {
+            background: linear-gradient(45deg, #ffaa00, #ff6600);
+            color: black;
+            box-shadow: 0 2px 10px rgba(255, 170, 0, 0.4);
+        }
+        
+        .computer-id-display {
+            background: linear-gradient(45deg, #1e3c72, #2a5298);
+            padding: 20px;
+            border-radius: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 1.3em;
+            text-align: center;
+            margin: 15px 0;
+            border: 2px solid rgba(0, 255, 136, 0.3);
+            box-shadow: 0 0 20px rgba(0, 255, 136, 0.2);
+            animation: pulse-border 2s infinite;
+        }
+        
+        @keyframes pulse-border {
+            0%, 100% { border-color: rgba(0, 255, 136, 0.3); }
+            50% { border-color: rgba(0, 255, 136, 0.8); }
+        }
+        
+        .controls-section {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            padding: 30px;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        
+        .controls-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .controls-header h2 {
+            font-size: 2em;
+            color: #ffcc00;
+            margin-bottom: 10px;
+        }
+        
+        .button-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+        
+        .btn {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 18px 25px;
+            border-radius: 15px;
+            cursor: pointer;
+            font-size: 1.1em;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s ease;
+        }
+        
+        .btn:hover::before {
+            left: 100%;
+        }
+        
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.5);
+        }
+        
+        .btn:active {
+            transform: translateY(-1px);
+        }
+        
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .btn.danger {
+            background: linear-gradient(45deg, #ff4444, #cc0000);
+        }
+        
+        .btn.success {
+            background: linear-gradient(45deg, #44ff44, #00cc00);
+        }
+        
+        .btn.warning {
+            background: linear-gradient(45deg, #ffaa00, #ff6600);
+        }
+        
+        .btn.info {
+            background: linear-gradient(45deg, #00ccff, #0099cc);
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            padding: 20px;
+            color: #aaa;
+            font-size: 0.9em;
+        }
+        
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #ffcc00;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .loading {
+            color: #ffcc00;
+            font-style: italic;
+        }
+        
+        .error-message {
+            background: rgba(255, 68, 68, 0.2);
+            border: 1px solid #ff4444;
+            color: #ff4444;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        
+        .success-message {
+            background: rgba(68, 255, 68, 0.2);
+            border: 1px solid #44ff44;
+            color: #44ff44;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="stars" id="stars"></div>
+    
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-shield-alt"></i> USB Control System</h1>
+            <p>Panel de Contrôle Avancé</p>
+            <div class="server-status offline" id="server-status">
+                <i class="fas fa-server"></i> <span id="server-text">Vérification du serveur...</span>
+            </div>
+        </div>
+        
+        <div class="dashboard">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon">
+                        <i class="fas fa-desktop"></i>
+                    </div>
+                    <h2>Système</h2>
+                </div>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <span class="info-label">
+                            <i class="fas fa-computer"></i> Ordinateur
+                        </span>
+                        <span class="info-value loading" id="computer-name">Chargement...</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">
+                            <i class="fas fa-user"></i> Utilisateur
+                        </span>
+                        <span class="info-value loading" id="user-name">Chargement...</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">
+                            <i class="fas fa-windows"></i> OS
+                        </span>
+                        <span class="info-value loading" id="os-info">Chargement...</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">
+                            <i class="fas fa-memory"></i> RAM Libre
+                        </span>
+                        <span class="info-value loading" id="ram-info">Chargement...</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon">
+                        <i class="fas fa-fingerprint"></i>
+                    </div>
+                    <h2>Identifiant</h2>
+                </div>
+                <div class="computer-id-display loading" id="computer-id">
+                    <i class="fas fa-spinner fa-spin"></i> Génération...
+                </div>
+                <button class="btn info" onclick="copyComputerId()">
+                    <i class="fas fa-copy"></i> Copier l'ID
+                </button>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon">
+                        <i class="fas fa-usb"></i>
+                    </div>
+                    <h2>USB</h2>
+                </div>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <span class="info-label">
+                            <i class="fas fa-drive"></i> Clés USB
+                        </span>
+                        <span class="info-value loading" id="usb-count">Chargement...</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">
+                            <i class="fas fa-key"></i> Clé cible
+                        </span>
+                        <span class="status-badge loading" id="target-usb">Chargement...</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">
+                            <i class="fas fa-info-circle"></i> Détails
+                        </span>
+                        <span class="info-value loading" id="usb-details">Chargement...</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon">
+                        <i class="fas fa-shield-virus"></i>
+                    </div>
+                    <h2>Blocage</h2>
+                </div>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <span class="info-label">
+                            <i class="fas fa-cogs"></i> Service
+                        </span>
+                        <span class="status-badge loading" id="service-status">Chargement...</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">
+                            <i class="fas fa-file-lock"></i> Fichiers bloqués
+                        </span>
+                        <span class="info-value loading" id="blocked-files">Chargement...</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">
+                            <i class="fas fa-image"></i> Fond d'écran
+                        </span>
+                        <span class="status-badge loading" id="wallpaper-status">Chargement...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="controls-section">
+            <div class="controls-header">
+                <h2><i class="fas fa-gamepad"></i> Panneau de Contrôle</h2>
+                <p>Gestion complète du système de blocage USB</p>
+            </div>
+            <div class="button-grid">
+                <button class="btn success" onclick="startService()" id="btn-start">
+                    <i class="fas fa-play"></i> Démarrer
+                </button>
+                <button class="btn danger" onclick="stopService()" id="btn-stop">
+                    <i class="fas fa-stop"></i> Arrêter
+                </button>
+                <button class="btn warning" onclick="installService()" id="btn-install">
+                    <i class="fas fa-download"></i> Installer
+                </button>
+                <button class="btn danger" onclick="uninstallService()" id="btn-uninstall">
+                    <i class="fas fa-trash"></i> Désinstaller
+                </button>
+                <button class="btn success" onclick="restoreSystem()" id="btn-restore">
+                    <i class="fas fa-undo"></i> Restaurer
+                </button>
+                <button class="btn info" onclick="refreshData()" id="btn-refresh">
+                    <i class="fas fa-sync"></i> Actualiser
+                </button>
+                <button class="btn" onclick="openScripts()" id="btn-scripts">
+                    <i class="fas fa-folder-open"></i> Scripts
+                </button>
+                <button class="btn" onclick="testConnection()" id="btn-test">
+                    <i class="fas fa-vial"></i> Test
+                </button>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p><i class="fas fa-code"></i> USB Control System v1.0 | Panel de Contrôle Avancé</p>
+            <p>Actualisation automatique toutes les 5 secondes</p>
+        </div>
+        
+        <div id="message-container"></div>
+    </div>
+    
+    <script>
+        // Créer les étoiles animées
+        function createStars() {
+            const starsContainer = document.getElementById('stars');
+            const starCount = 100;
+            
+            for (let i = 0; i < starCount; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                star.style.left = Math.random() * 100 + '%';
+                star.style.top = Math.random() * 100 + '%';
+                star.style.animationDelay = Math.random() * 3 + 's';
+                star.style.animationDuration = (Math.random() * 3 + 2) + 's';
+                starsContainer.appendChild(star);
+            }
+        }
+        
+        const API_BASE = 'http://localhost:8080';
+        let isServerOnline = false;
+        
+        async function fetchAPI(endpoint) {
+            try {
+                const response = await fetch(API_BASE + endpoint);
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                return await response.json();
+            } catch (error) {
+                console.error('API Error:', error);
+                throw error;
+            }
+        }
+        
+        async function updateSystemInfo() {
+            try {
+                const data = await fetchAPI('/api/system');
+                document.getElementById('computer-name').textContent = data.ComputerName;
+                document.getElementById('user-name').textContent = data.UserName;
+                document.getElementById('os-info').textContent = data.OS;
+                document.getElementById('ram-info').textContent = `${data.FreeRAM} GB / ${data.TotalRAM} GB`;
+                
+                document.querySelectorAll('#computer-name, #user-name, #os-info, #ram-info').forEach(el => {
+                    el.classList.remove('loading');
+                });
+            } catch (error) {
+                showMessage('Impossible de charger les informations système', 'error');
+            }
+        }
+        
+        async function updateComputerId() {
+            try {
+                const data = await fetchAPI('/api/id');
+                const idElement = document.getElementById('computer-id');
+                idElement.innerHTML = data.ComputerId;
+                idElement.classList.remove('loading');
+            } catch (error) {
+                showMessage('Impossible de charger l\'identifiant', 'error');
+            }
+        }
+        
+        async function updateUSBStatus() {
+            try {
+                const data = await fetchAPI('/api/usb');
+                document.getElementById('usb-count').textContent = data.ConnectedUSB;
+                document.getElementById('usb-count').classList.remove('loading');
+                
+                const targetElement = document.getElementById('target-usb');
+                if (data.TargetUSBConnected) {
+                    targetElement.textContent = 'CONNECTÉE';
+                    targetElement.className = 'status-badge active';
+                } else {
+                    targetElement.textContent = 'Non connectée';
+                    targetElement.className = 'status-badge inactive';
+                }
+                targetElement.classList.remove('loading');
+                
+                const detailsElement = document.getElementById('usb-details');
+                detailsElement.textContent = data.USBDrives.length > 0 ? data.USBDrives.join(', ') : 'Aucune';
+                detailsElement.classList.remove('loading');
+            } catch (error) {
+                showMessage('Impossible de charger le statut USB', 'error');
+            }
+        }
+        
+        async function updateBlockStatus() {
+            try {
+                const data = await fetchAPI('/api/block');
+                
+                const serviceElement = document.getElementById('service-status');
+                if (data.ServiceInstalled && data.ServiceRunning) {
+                    serviceElement.textContent = 'Actif';
+                    serviceElement.className = 'status-badge active';
+                } else {
+                    serviceElement.textContent = 'Inactif';
+                    serviceElement.className = 'status-badge inactive';
+                }
+                serviceElement.classList.remove('loading');
+                
+                document.getElementById('blocked-files').textContent = `${data.BlockedFiles}/${data.TotalExtensions}`;
+                document.getElementById('blocked-files').classList.remove('loading');
+                
+                const wallpaperElement = document.getElementById('wallpaper-status');
+                if (data.BlackWallpaper) {
+                    wallpaperElement.textContent = 'Noir';
+                    wallpaperElement.className = 'status-badge active';
+                } else {
+                    wallpaperElement.textContent = 'Normal';
+                    wallpaperElement.className = 'status-badge inactive';
+                }
+                wallpaperElement.classList.remove('loading');
+            } catch (error) {
+                showMessage('Impossible de charger le statut de blocage', 'error');
+            }
+        }
+        
+        async function refreshData() {
+            if (!isServerOnline) return;
+            
+            await Promise.all([
+                updateSystemInfo(),
+                updateComputerId(),
+                updateUSBStatus(),
+                updateBlockStatus()
+            ]);
+        }
+        
+        async function copyComputerId() {
+            try {
+                const data = await fetchAPI('/api/id');
+                await navigator.clipboard.writeText(data.ComputerId);
+                showMessage('ID copié: ' + data.ComputerId, 'success');
+            } catch (error) {
+                showMessage('Impossible de copier l\'ID', 'error');
+            }
+        }
+        
+        async function executeAction(endpoint, buttonId) {
+            const button = document.getElementById(buttonId);
+            button.disabled = true;
+            
+            try {
+                const data = await fetchAPI(endpoint);
+                if (data.success) {
+                    showMessage(data.message, 'success');
+                    await refreshData();
+                } else {
+                    showMessage(data.message, 'error');
+                }
+            } catch (error) {
+                showMessage('Erreur lors de l\'action: ' + error.message, 'error');
+            } finally {
+                button.disabled = false;
+            }
+        }
+        
+        function startService() { executeAction('/api/start', 'btn-start'); }
+        function stopService() { executeAction('/api/stop', 'btn-stop'); }
+        function installService() { executeAction('/api/install', 'btn-install'); }
+        function uninstallService() { executeAction('/api/uninstall', 'btn-uninstall'); }
+        function restoreSystem() { executeAction('/api/restore', 'btn-restore'); }
+        
+        function openScripts() {
+            showMessage('Ouverture du dossier des scripts', 'info');
+        }
+        
+        function testConnection() {
+            checkServerStatus();
+        }
+        
+        function showMessage(message, type = 'info') {
+            const container = document.getElementById('message-container');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `${type}-message`;
+            messageDiv.innerHTML = `<i class="fas fa-${type === 'error' ? 'exclamation-triangle' : type === 'success' ? 'check-circle' : 'info-circle'}"></i> ${message}`;
+            container.appendChild(messageDiv);
+            
+            setTimeout(() => {
+                messageDiv.style.opacity = '0';
+                setTimeout(() => messageDiv.remove(), 500);
+            }, 5000);
+        }
+        
+        async function checkServerStatus() {
+            const statusElement = document.getElementById('server-status');
+            const textElement = document.getElementById('server-text');
+            
+            try {
+                await fetchAPI('/api/system');
+                isServerOnline = true;
+                statusElement.className = 'server-status online';
+                textElement.innerHTML = '<i class="fas fa-check-circle"></i> Serveur en ligne';
+                await refreshData();
+            } catch (error) {
+                isServerOnline = false;
+                statusElement.className = 'server-status offline';
+                textElement.innerHTML = '<i class="fas fa-times-circle"></i> Serveur hors ligne';
+                
+                document.querySelectorAll('.loading').forEach(el => {
+                    el.textContent = 'Serveur hors ligne';
+                    el.classList.remove('loading');
+                });
+            }
+        }
+        
+        // Initialisation
+        createStars();
+        checkServerStatus();
+        
+        // Actualisation automatique
+        setInterval(() => {
+            if (isServerOnline) {
+                refreshData();
+            } else {
+                checkServerStatus();
+            }
+        }, 5000);
+        
+        // Vérification USB toutes les 10 secondes
+        setInterval(async () => {
+            if (isServerOnline) {
+                const usbData = await fetchAPI('/api/usb');
+                if (usbData.TargetUSBConnected) {
+                    showMessage('⚠️ Clé USB "uncsniper2a" détectée! Blocage activé.', 'warning');
+                    await refreshData();
+                }
+            }
+        }, 10000);
+    </script>
+</body>
+</html>
